@@ -1,11 +1,3 @@
---SQL Prakt DB2 s70357
-
---1
-alter table Projekt add MitID char(3) NULL;
-
-insert into Mitarbeiter (MitID,Nachname,Vorname,Ort,Gebdat,Beruf,Telnr) values
-('110','Uhr','Klaus','Dresden','1976-05-27','Vertreter','01908989890');
-
 insert into Mitarbeiter (MitID,Nachname,Vorname,Ort,Gebdat,Beruf,Telnr) values
 ('115','Mickey','Mouse','Disneyland','1959-06-27','Dipl-Ing.','491908989890');
 
@@ -47,6 +39,21 @@ insert into Projekt (ProNr,Proname,Aufwand) values
 
 --2 4
 
+--2.5
+select Nachname,Vorname,Ort,Proname from Mitarbeiter,Projekt where Mitarbeiter.MitID = Projekt.LeiterID;
+select Nachname,Vorname,Ort,Proname from Mitarbeiter join Projekt on Mitarbeiter.MitID = Projekt.LeiterID;
+
+select Mitarbeiter.MitID,Nachname,Vorname,Projekt.ProNr,Istanteil from Mitarbeiter,Projekt,Zuordnung
+where Mitarbeiter.MitID = Zuordnung.MitID and Zuordnung.ProNr = Projekt.ProNr;
+select Mitarbeiter.MitID,Nachname,Vorname,Projekt.ProNr,Istanteil from Mitarbeiter 
+join Zuordnung on Mitarbeiter.MitID = Zuordnung.MitID 
+join Projekt on Zuordnung.ProNr = Projekt.ProNr;
+
+select Projekt.ProNr,Proname,Nachname,Vorname,Ort,Istanteil from Zuordnung
+join Projekt on Projekt.ProNr = Zuordnung.ProNr
+join Mitarbeiter on Mitarbeiter.MitID = Projekt.LeiterID
+group by Zuordnung.ProNr
+having sum(Istanteil) >= 3; --TODO
 --3
 select * into Kopie_Mitarbeiter from Mitarbeiter;
 sp_who s70228;
