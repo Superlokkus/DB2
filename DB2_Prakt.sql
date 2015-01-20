@@ -38,6 +38,41 @@ insert into Projekt (ProNr,Proname,Aufwand) values
 (47,'Oracle-Prakt.',0);
 
 --2 4
+create procedure projA (@PNr int) as
+declare @Proname char(15)
+declare @LeiterID char(3)
+
+print select ProNr,Proname,Aufwand,LeiterID,Nachname,Vorname from Projekt join Mitarbeiter on LeiterID = MitID where ProNr = @PNr
+
+declare @MitID char (3)
+declare @Nachname char(10)
+declare @Vorname char(10)
+declare @Beruf char(15)
+declare @Plananteil float
+declare @Istanteil float
+declare @Abweichung float
+
+declare PM cursor for select Mitarbeiter.MitID,Nachname,Vorname,Beruf,Plananteil,Istanteil,(Plananteil - Istanteil ) as 'Abweichung' from Mitarbeiter join Zuordnung on Mitarbeiter.MitID = Zuordnung.MitID where ProNr = @PNr
+open PM
+
+fetch PM into @MitID,@Nachname,@Vorname,@Beruf,@Plananteil,@Istanteil,@Abweichung
+if(@@sqlstatus = 2)
+begin 
+    print 'Kein Mitarbeiter zugeteilt!'
+    close PM
+    return
+end
+
+while(@@sqlstatus = 0)
+begin
+    print 'MitID: %1! Nachname: %2! Vorname: %3! Beruf: %4! Plananteil: %5! Istanteil: %6! Abweichung: %7! ', @MitID,@Nachname,@Vorname,@Beruf,@Plananteil,@Istanteil,@Abweichung
+    fetch PM into @MitID,@Nachname,@Vorname,@Beruf,@Plananteil,@Istanteil,@Abweichung
+end
+
+close PM
+return
+
+
 
 --2.5
 select Nachname,Vorname,Ort,Proname from Mitarbeiter,Projekt where Mitarbeiter.MitID = Projekt.LeiterID;
