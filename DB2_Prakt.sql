@@ -87,12 +87,41 @@ join Projekt on Zuordnung.ProNr = Projekt.ProNr;
 select Projekt.ProNr,Proname,Nachname,Vorname,Ort,Istanteil as 'Aufwand Leiter' from Projekt
 left join Mitarbeiter on Mitarbeiter.MitID = LeiterID
 left join Zuordnung on Projekt.ProNr = Zuordnung.ProNr and LeiterID = Zuordnung.MitID
-where Projekt.ProNr in (select ProNr from Zuordnung group by ProNr having sum(Istanteil) >= 3)
+where Projekt.ProNr in (select ProNr from Zuordnung group by ProNr having sum(Istanteil) >= 3);
 select Projekt.ProNr,Proname,Nachname,Vorname,Ort,Istanteil as 'Aufwand Leiter' from Projekt,Mitarbeiter,Zuordnung
 where (Mitarbeiter.MitID = LeiterID) and Projekt.ProNr = Zuordnung.ProNr and (LeiterID = Zuordnung.MitID) and Projekt.ProNr in (select ProNr from Zuordnung group by ProNr having sum(Istanteil) >= 3);
 
+select Projekt.ProNr,Projekt.Proname,sum(Istanteil) as 'Summe Istanteile' 
+from Projekt left join Zuordnung on Projekt.ProNr = Zuordnung.ProNr
+group by Projekt.ProNr;
 
+begin
+declare @dummy float(8)
+select @dummy = NULL
+select Projekt.ProNr,Projekt.Proname,sum(Istanteil) as 'Summe Istanteile' 
+from Projekt,Zuordnung where Projekt.ProNr = Zuordnung.ProNr
+group by Projekt.ProNr
+union 
+select Projekt.ProNr,Projekt.Proname,@dummy as 'Summe Istanteile' 
+from Projekt where ProNr not in (select ProNr from Zuordnung)
+order by ProNr
+end;
 
+select Mitarbeiter.MitID,Nachname,Vorname,Ort,(1 - sum(Plananteil)) as 'Reserve'
+from Mitarbeiter left join Zuordnung on Mitarbeiter.MitID = Zuordnung.MitID
+group by Mitarbeiter.MitID;
+
+begin
+declare @dummy float(8)
+select @dummy = NULL
+select Mitarbeiter.MitID,Nachname,Vorname,Ort,(1 - sum(Plananteil)) as 'Reserve'
+from Mitarbeiter,Zuordnung where Mitarbeiter.MitID = Zuordnung.MitID
+group by Mitarbeiter.MitID
+union
+select Mitarbeiter.MitID,Nachname,Vorname,Ort,@dummy as 'Reserve'
+from Mitarbeiter where Mitarbeiter.MitID not in (select MitID from Zuordnung)
+order by Mitarbeiter.MitID
+end;
 --3
 select * into Kopie_Mitarbeiter from Mitarbeiter;
 sp_who s70228;
