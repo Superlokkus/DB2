@@ -84,11 +84,15 @@ select Mitarbeiter.MitID,Nachname,Vorname,Projekt.ProNr,Istanteil from Mitarbeit
 join Zuordnung on Mitarbeiter.MitID = Zuordnung.MitID 
 join Projekt on Zuordnung.ProNr = Projekt.ProNr;
 
-select Projekt.ProNr,Proname,Nachname,Vorname,Ort,Istanteil from Zuordnung
-join Projekt on Projekt.ProNr = Zuordnung.ProNr
-join Mitarbeiter on Mitarbeiter.MitID = Projekt.LeiterID
-group by Zuordnung.ProNr
-having sum(Istanteil) >= 3; --TODO
+select Projekt.ProNr,Proname,Nachname,Vorname,Ort,Istanteil as 'Aufwand Leiter' from Projekt
+left join Mitarbeiter on Mitarbeiter.MitID = LeiterID
+left join Zuordnung on Projekt.ProNr = Zuordnung.ProNr and LeiterID = Zuordnung.MitID
+where Projekt.ProNr in (select ProNr from Zuordnung group by ProNr having sum(Istanteil) >= 3)
+select Projekt.ProNr,Proname,Nachname,Vorname,Ort,Istanteil as 'Aufwand Leiter' from Projekt,Mitarbeiter,Zuordnung
+where (Mitarbeiter.MitID = LeiterID) and Projekt.ProNr = Zuordnung.ProNr and (LeiterID = Zuordnung.MitID) and Projekt.ProNr in (select ProNr from Zuordnung group by ProNr having sum(Istanteil) >= 3);
+
+
+
 --3
 select * into Kopie_Mitarbeiter from Mitarbeiter;
 sp_who s70228;
