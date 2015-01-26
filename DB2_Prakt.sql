@@ -126,3 +126,47 @@ alter table Zuordnung add constraint realIst check (Istanteil <= 1.0);
 -- 4 II 4.1
 alter table Projekt add foreign key (LeiterID) references Mitarbeiter(MitID);
 
+
+--Oracle
+--1.3.
+-- Wiedergabe von TABLE DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
+CREATE TABLE HERSTELLER 
+(
+  HSTNR VARCHAR2(10 BYTE) NOT NULL 
+, NAME VARCHAR2(50 BYTE) NOT NULL 
+, STRASSE VARCHAR2(50 BYTE) 
+, PLZ VARCHAR2(5 BYTE) 
+, ORT VARCHAR2(50 BYTE) 
+, KONTAKTAUFNAHME DATE DEFAULT sysdate 
+, CONSTRAINT PK_HERSTELLER PRIMARY KEY 
+  (
+    HSTNR 
+  )
+  ENABLE 
+) 
+CREATE UNIQUE INDEX PK_HERSTELLER ON HERSTELLER (HSTNR) 
+Insert into HERSTELLER (HSTNR,NAME,STRASSE,PLZ,ORT,KONTAKTAUFNAHME) values ('134556','Magna Heiligenstadt','Fabrikstrasse 32','37308','Heiligenstadt',to_date('12.06.07','DD.MM.RR'));
+Insert into HERSTELLER (HSTNR,NAME,STRASSE,PLZ,ORT,KONTAKTAUFNAHME) values ('588797','MAN','Ginsheimerstr. 2','65462','Ginsheim',to_date('01.01.11','DD.MM.RR'));
+
+
+--1.5
+insert into hersteller(hstnr,hstname,strasse,plz,ort) values ('693253','Tower Zwickau','Kopernikusstr. 60','08056','Zwickau')
+
+--1.6
+select name,plz,ort from hersteller order by plz
+
+--1.7
+select * from Hersteller where months_between(sysdate,kontaktaufnahme) < 60
+
+--1.8
+
+
+
+
+
+
+
+
+
+
+
