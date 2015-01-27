@@ -230,11 +230,21 @@ create trigger Beruf_Proto on Mitarbeiter
 for update  as
 if update(Beruf)
     begin
+    declare @MitID char(3)
+    select @MitID = (select (inserted.MitID) from inserted,deleted
+    where inserted.MitID = deleted.MitID)
+    declare @Beruf_alt char(15)
+    declare @Beruf_neu char(15)
+    select @Beruf_alt = (select Beruf from deleted where MitID = @MitID)
+    select @Beruf_neu = (select Beruf from inserted where MitID = @MitID)
     insert into Bprotokoll(Nutzer,Zeit,MitID,Beruf_alt,Beruf_neu)
-    values (user_name(),getdate(),
-    (select (inserted.MitID,deleted.Beruf,inserted.Beruf) from inserted,deleted
-    where inserted.MitID = deleted.MitID))
-    end;
+    values (user_name(),getdate(),@MitID,@Beruf_alt,@Beruf_neu)
+        end;
+
+begin transaction
+update Mitarbeiter set Beruf = 'Klugscheisser' where MitID = '146'
+select * from Bprotokoll
+rollback
 --Oracle
 --1.3.
 -- Wiedergabe von TABLE DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
