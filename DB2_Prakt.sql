@@ -244,7 +244,19 @@ if update(Beruf)
 begin transaction
 update Mitarbeiter set Beruf = 'Klugscheisser' where MitID = '146'
 select * from Bprotokoll
-rollback
+rollback;
+
+--PK(Nutzer,Zeit)
+
+create trigger Beruf_Proto_Cascade on Mitarbeiter
+for delete as
+delete Bprotokoll where MitID in (select MitID from deleted);
+
+begin transaction
+update Mitarbeiter set Beruf = 'Klugscheisser' where MitID = '135'
+delete Mitarbeiter where MitID = '135'
+select * from Bprotokoll
+rollback;
 --Oracle
 --1.3.
 -- Wiedergabe von TABLE DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
