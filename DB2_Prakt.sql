@@ -157,8 +157,30 @@ sp_bindrule relevantAdult,'Mitarbeiter.Gebdat';
 alter table Zuordnung add constraint realIst check (Istanteil <= 1.0);
 
 -- 4 II 4.1
+--a)
 alter table Projekt add foreign key (LeiterID) references Mitarbeiter(MitID);
 
+insert into Mitarbeiter (MitID,Nachname,Vorname,Gebdat,Telnr) 
+values ('555','New Guy','Mr.','1987-06-05','2323');
+insert into Projekt (ProNr,Proname,Beschreibung,Aufwand,LeiterID)
+values (4242,'FNP','Fracking New Project',9001,'555');
+
+update Projekt set LeiterID = '666' where ProNr = 4242;
+update Mitarbeiter set MitID = '667' where MitID = '555';
+
+--b)
+delete Mitarbeiter where MitID = '555';
+
+--c)
+update Projekt set LeiterID = '146' where ProNr = 4242;
+update Mitarbeiter set MitID = '667' where MitID = '555';
+delete Mitarbeiter where MitID = '667';
+--d)
+insert into Projekt (ProNr,Proname,Beschreibung,Aufwand,LeiterID)
+values (4342,'Frop','Fracking New Project',9001,'666');
+--e)
+insert into Projekt (ProNr,Proname,Beschreibung,Aufwand,LeiterID)
+values (4342,'Frop','Fracking New Project',9001,NULL);
 
 --Oracle
 --1.3.
