@@ -182,6 +182,44 @@ values (4342,'Frop','Fracking New Project',9001,'666');
 insert into Projekt (ProNr,Proname,Beschreibung,Aufwand,LeiterID)
 values (4342,'Frop','Fracking New Project',9001,NULL);
 
+
+--4 III 5.1
+create trigger Plananteil_Summe_1_per_Mitarbeiter on Zuordnung
+for insert,update as
+if update (Plananteil)
+    begin
+    if ((select count(count(inserted.MitID)) from inserted,Zuordnung 
+    where inserted.MitID = Zuordnung.MitID and inserted.ProNr = Zuordnung.ProNr
+    group by inserted.MitID having sum(inserted.Plananteil) > 1.0) > 0 )
+        begin
+        print 'Mitarbeiter darf kein Soll > 1.0 besitzen'
+        rollback
+        end
+    end;
+--a)
+begin transaction
+update Zuordnung set Plananteil = Plananteil + 0.3 where ProNr = 31
+rollback;
+--b) 
+begin transaction
+update Zuordnung set Plananteil = Plananteil + 0.4 where MitID = '105'
+rollbacK;
+
+--4 III 5.2
+create trigger Abgeschlossenes_Projekt on Zuordnung
+for delete,update as
+update Projekt set LeiterID = NULL where ProNr in (select ProNr from deleted where ProNr not in (select ProNr from Zuordnung));
+
+--a)
+begin transaction
+delete Zuordnung where ProNr = 36
+select * from Projekt where ProNr = 36
+rollback;
+--b)
+begin transaction
+update Zuordnung set ProNr = 37 where ProNr = 35
+select * from Projekt
+rollback;
 --Oracle
 --1.3.
 -- Wiedergabe von TABLE DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
