@@ -220,6 +220,21 @@ begin transaction
 update Zuordnung set ProNr = 37 where ProNr = 35
 select * from Projekt
 rollback;
+
+--4 III 6
+create table Bprotokoll(
+MitID char(3),Nutzer char(16),Zeit datetime,Beruf_alt char(15),Beruf_neu char(15)
+);
+
+create trigger Beruf_Proto on Mitarbeiter
+for update  as
+if update(Beruf)
+    begin
+    insert into Bprotokoll(Nutzer,Zeit,MitID,Beruf_alt,Beruf_neu)
+    values (user_name(),getdate(),
+    (select (inserted.MitID,deleted.Beruf,inserted.Beruf) from inserted,deleted
+    where inserted.MitID = deleted.MitID))
+    end;
 --Oracle
 --1.3.
 -- Wiedergabe von TABLE DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
