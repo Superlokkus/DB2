@@ -289,9 +289,47 @@ select name,plz,ort from hersteller order by plz
 select * from Hersteller where months_between(sysdate,kontaktaufnahme) < 60
 
 --1.8
+done
 
+--2
+create type TPreis as object(
+Preis Number(10,2),
+member function Netto return number,
+member function Brutto  return number,
+member function Umrechnung (Faktor number) return number
+)
+--2.2
+create type body TPreis as 
+    member function Netto return number is
+        begin
+        return (Preis);
+        end;
+    member function Brutto return number is
+        begin
+        return (Preis * 1.19);
+        end;
+    member function Umrechnung (Faktor number) return number is
+        begin
+        return (Preis * Faktor);
+        end;
+end;
+--2.3 
+done
+--3.1
+create type AnzTueren as varray(5) of char(10);
+--3.2
+alter table Fahrzeug add Tuerzahl AnzTueren;
+--3.3 
+insert into Fahrzeug(FzNr,Bezeichnung,Gewicht,Listenpreis,Tuerzahl)
+values (10000,'BMW Z4 Roadstar',900,TPreis(60000),AnzTueren('3-Türer'));
+insert into Fahrzeug(FzNr,Bezeichnung,Gewicht,Listenpreis,Tuerzahl)
+values (10001,'VW Golf GTI',800,TPreis(25000),AnzTueren('3-Türer','5-Türer'));
+insert into Fahrzeug(FzNr,Bezeichnung,Gewicht,Listenpreis,Tuerzahl)
+values (10002,'Audi A3',850,TPreis(30000),AnzTueren('3-Türer'));
 
-
+--3.4
+select F.Listenpreis.Brutto() Bruttopreis,F.Listenpreis.Umrechnung(1.5) Umrechnung
+from Fahrzeug F;
 
 
 
