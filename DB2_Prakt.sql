@@ -331,10 +331,49 @@ values (10002,'Audi A3',850,TPreis(30000),AnzTueren('3-Türer'));
 select F.Listenpreis.Brutto() Bruttopreis,F.Listenpreis.Umrechnung(1.5) Umrechnung
 from Fahrzeug F;
 
+--4.1
+create type tPreisentwicklung as object(
+PeNr varchar2(10),
+Netto number(10,2),
+Datum Date);
 
+--4.2
+create type ntPreisentwicklung as table of tPreisentwicklung;
 
+--4.3
+alter table Bauteil add Preis ntPreisentwicklung 
+nested table Preis store as ntPreise;
 
+--4.4
+insert into Bauteil (BtNr, Teilename, Einbauzeit, HstNr, Preis)
+values (5000, 'Tuer links', 20, '134556', ntPreisentwicklung());
 
+insert into Bauteil (BtNr, Teilename, Einbauzeit, HstNr, Preis)
+values (5001, 'Spiegel rechts', 10, '588797', ntPreisentwicklung());
 
+insert into Bauteil (BtNr, Teilename, Einbauzeit, HstNr, Preis)
+values (5002, 'Auspuff', 30, '693253', ntPreisentwicklung());
+
+insert into TABLE (SELECT Preis from Bauteil where Bauteil.BtNr = 5000)
+values ('7007', 900, TO_DATE('12102013', 'DDMMYY'));
+
+insert into TABLE (SELECT Preis from Bauteil where Bauteil.BtNr = 5001)
+values ('7008', 100, TO_DATE('12102013', 'DDMMYY'));
+
+insert into TABLE (SELECT Preis from Bauteil where Bauteil.BtNr = 5002)
+values ('7009', 2000, TO_DATE('12102013', 'DDMMYY'));
+
+--4.6
+SELECT * FROM Bauteil
+CONNECT BY PRIOR BtNr=Baugruppe
+START WITH Baugruppe IS NULL;
+
+--4.7
+select * from Bauteil,table(Bauteil.Preis);
+
+--4.8
+select * from Bauteil where ROWNUM <= 5 order by btnr;
+
+--4.9
 
 
