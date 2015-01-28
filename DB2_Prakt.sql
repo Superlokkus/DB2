@@ -400,16 +400,158 @@ create view Lieferant_OV (LiefNr, Name, Strasse, Plz, Ort) AS
 select l.LiefNr, l.Name, l.Adresse.Strasse, l.Adresse.Plz, l.Adresse.Ort
 from Lieferant l;
 
+--5.4
+insert into Lieferant_OV (LiefNr, Name, Strasse, Plz, Ort)
+values (752443,'Laepple Teublitz','MaxStr. 12',93158,'Teublitz');
+
 --6
 --6.1 PK,Unique-Constraints,NotNULL,Datentypswahl
 
 --6.2
-create TRIGGER Lieferant_OV_Insert
-for insert ON Lieferant_OV
+create or replace TRIGGER Lieferant_OV_Insert
+instead of insert ON Lieferant_OV
 FOR EACH ROW
+  BEGIN
+  insert INTO Lieferant VALUES  (:new.LiefNr, :new.Name,TAdresse(:new.Strasse, :new.Plz, :new.Ort));
+  END;
+    
+-- 6.3
+--a)
+CREATE SEQUENCE sq_einbau
+  MINVALUE 1
+  MAXVALUE 999999999999999999999999999
+  START WITH 2000
+  INCREMENT BY 1
+  CACHE 20;
+  
+--b)
+CREATE OR REPLACE TRIGGER Einbau_trig
+  BEFORE 
+  INSERT OR 
+  UPDATE OF EbNr
+  ON Einbau
+  FOR EACH ROW
     BEGIN
-      IF insertING THEN
-	   insert INTO Lieferant VALUES  (:new.LiefNr, :new.Name,TAdresse(:new.Strasse, :new.Plz, :new.Ort)
+      IF INSERTING THEN
+        SELECT CONCAT('E',TO_CHAR(sq_einbau.NEXTVAL)) into :new.EbNr from dual;
       END IF;
-    END
+      IF UPDATING THEN
+        :new.EbNr := :old.EbNr;
+      END IF;
+    END;
+    
+c)
+INSERT INTO Lieferant_OV (Liefnr, Name, Strasse, PLZ, Ort)
+  VALUES (752443, 'Laepple Teubnlitz', 'Maxstr. 12', '93158', 'Teublitz');
+
+-- 6.4
+CREATE OR REPLACE TRIGGER Einbau_trig
+  BEFORE 
+  INSERT OR 
+  UPDATE OF EbNr
+  ON Einbau
+  FOR EACH ROW
+  DECLARE 
+    BtNr_keine_Baugruppe EXCEPTION;
+    test_BtNr number(5);
+    
+    BEGIN
+    
+      SELECT BtNr INTO test_BtNr
+      FROM Bauteil
+      WHERE BtNr = :new.BtNr AND Baugruppe IS NULL;
+      
+      IF INSERTING THEN
+        SELECT CONCAT('E',TO_CHAR(sq_einbau.NEXTVAL)) into :new.EbNr from dual;
+        
+        IF test_BtNr IS NULL THEN
+          RAISE BtNr_keine_Baugruppe;
+        END IF;
+        
+      END IF;
+      
+      IF UPDATING THEN
+        :new.EbNr := :old.EbNr;
+        
+        IF test_BtNr IS NULL THEN
+          RAISE BtNr_keine_Baugruppe;
+        END IF;
+        
+      END IF;
+      
+      EXCEPTION
+        WHEN BtNr_keine_Baugruppe THEN
+          raise_application_error (-20000, 'Bauteilnummer ' || :new.BtNr || ' ist nicht zugelassen.');
+    END;
+
+-- 6.5
+INSERT INTO Einbau (BTNR, FZNR, Anzahl)
+  VALUES(5001, 10001, 1);
+
+INSERT INTO Einbau (BTNR, FZNR, Anzahl)
+  VALUES(5010, 10002, 2);
+
+-- 6.6
+DELETE FROM Fahrzeug WHERE FzNr = 10001;
+
+-- 7.1
+Set serveroutput on // Zum Einschalten der Server-Ausgabe
+
+create or replace PROCEDURE gewicht_proc
+	(v_gewicht IN Fahrzeug.Gewicht%TYPE)
+IS
+
+CURSOR gewicht_cursor IS
+	SELECT FzNr, Bezeichnung, Gewicht
+	FROM Fahrzeug
+	WHERE Gewicht <= 900;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('');
+  DBMS_OUTPUT.PUT_LINE('');
+
+	FOR car in gewicht_cursor
+	LOOP
+		DBMS_OUTPUT.PUT_LINE(rpad('FzNr', 12) || ': ' || car.FzNr);
+		DBMS_OUTPUT.PUT_LINE('Bezeichnung'  || ' : ' || car.Bezeichnung);
+		DBMS_OUTPUT.PUT_LINE(rpad('Gewicht', 12) || ': ' || car.Gewicht);
+		DBMS_OUTPUT.PUT_LINE('-----------------------------------');
+	END LOOP;
+END gewicht_proc;
+
+-- 7.2
+create or replace PROCEDURE einbau_proc 
+IS
+	v_car_nr Fahrzeug.FzNr%TYPE;
+
+	CURSOR kfz_cur
+	IS
+		SELECT DISTINCT f.FzNr, f.Bezeichnung
+		FROM Einbau e, Fahrzeug f
+		WHERE e.FzNr = f.FzNr;
+
+	CURSOR bauteile_cur
+	IS
+		SELECT e.EBNR, e.Fznr, e.BtNr, b.Teilname
+		FROM Einbau e, Bauteil b
+		WHERE e.FzNr = v_car_nr
+    AND e.BtNr = b.BtNr;
+
+	BEGIN
+		DBMS_OUTPUT.PUT_LINE('');
+		DBMS_OUTPUT.PUT_LINE('');
+
+		FOR car IN kfz_cur
+		LOOP
+			DBMS_OUTPUT.PUT_LINE(car.Bezeichnung);
+			v_car_nr := car.FzNr;
+
+			FOR bt IN bauteile_cur
+			LOOP
+				DBMS_OUTPUT.PUT_LINE('        ' || bt.Teilname);
+			END LOOP;
+		END LOOP;
+	END einbau_proc;
+
+
 
