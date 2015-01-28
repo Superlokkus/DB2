@@ -95,33 +95,27 @@ select Projekt.ProNr,Projekt.Proname,sum(Istanteil) as 'Summe Istanteile'
 from Projekt left join Zuordnung on Projekt.ProNr = Zuordnung.ProNr
 group by Projekt.ProNr;
 
-begin
-declare @dummy float(8)
-select @dummy = NULL
+
 select Projekt.ProNr,Projekt.Proname,sum(Istanteil) as 'Summe Istanteile' 
 from Projekt,Zuordnung where Projekt.ProNr = Zuordnung.ProNr
 group by Projekt.ProNr
 union 
-select Projekt.ProNr,Projekt.Proname,@dummy as 'Summe Istanteile' 
+select Projekt.ProNr,Projekt.Proname,0 as 'Summe Istanteile' 
 from Projekt where ProNr not in (select ProNr from Zuordnung)
 order by ProNr
-end;
 
 select Mitarbeiter.MitID,Nachname,Vorname,Ort,(1 - sum(Plananteil)) as 'Reserve'
 from Mitarbeiter left join Zuordnung on Mitarbeiter.MitID = Zuordnung.MitID
 group by Mitarbeiter.MitID;
 
-begin
-declare @dummy float(8)
-select @dummy = NULL
+
 select Mitarbeiter.MitID,Nachname,Vorname,Ort,(1 - sum(Plananteil)) as 'Reserve'
 from Mitarbeiter,Zuordnung where Mitarbeiter.MitID = Zuordnung.MitID
 group by Mitarbeiter.MitID
 union
-select Mitarbeiter.MitID,Nachname,Vorname,Ort,@dummy as 'Reserve'
+select Mitarbeiter.MitID,Nachname,Vorname,Ort,1 as 'Reserve'
 from Mitarbeiter where Mitarbeiter.MitID not in (select MitID from Zuordnung)
 order by Mitarbeiter.MitID
-end;
 --3
 select * into Kopie_Mitarbeiter from Mitarbeiter;
 sp_who s70228;
@@ -230,15 +224,9 @@ create trigger Beruf_Proto on Mitarbeiter
 for update  as
 if update(Beruf)
     begin
-    declare @MitID char(3)
-    select @MitID = (select (inserted.MitID) from inserted,deleted
-    where inserted.MitID = deleted.MitID)
-    declare @Beruf_alt char(15)
-    declare @Beruf_neu char(15)
-    select @Beruf_alt = (select Beruf from deleted where MitID = @MitID)
-    select @Beruf_neu = (select Beruf from inserted where MitID = @MitID)
-    insert into Bprotokoll(Nutzer,Zeit,MitID,Beruf_alt,Beruf_neu)
-    values (user_name(),getdate(),@MitID,@Beruf_alt,@Beruf_neu)
+     insert into Bprotokoll
+select inserted.MitID,user_name(),getdate(),deleted.Beruf,inserted.Beruf from inserted,deleted
+ where inserted.MitID = deleted.MitID
         end;
 
 begin transaction
