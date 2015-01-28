@@ -259,8 +259,8 @@ select * from Bprotokoll
 rollback;
 --Oracle
 --1.3.
--- Wiedergabe von TABLE DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
-CREATE TABLE HERSTELLER 
+-- Wiedergabe von table DDL für Objekt DB01.HERSTELLER nicht möglich, da DBMS_METADATA internen Generator versucht.
+create table HERSTELLER 
 (
   HSTNR VARCHAR2(10 BYTE) NOT NULL 
 , NAME VARCHAR2(50 BYTE) NOT NULL 
@@ -274,7 +274,7 @@ CREATE TABLE HERSTELLER
   )
   ENABLE 
 ) 
-CREATE UNIQUE INDEX PK_HERSTELLER ON HERSTELLER (HSTNR) 
+create UNIQUE INDEX PK_HERSTELLER ON HERSTELLER (HSTNR) 
 Insert into HERSTELLER (HSTNR,NAME,STRASSE,PLZ,ORT,KONTAKTAUFNAHME) values ('134556','Magna Heiligenstadt','Fabrikstrasse 32','37308','Heiligenstadt',to_date('12.06.07','DD.MM.RR'));
 Insert into HERSTELLER (HSTNR,NAME,STRASSE,PLZ,ORT,KONTAKTAUFNAHME) values ('588797','MAN','Ginsheimerstr. 2','65462','Ginsheim',to_date('01.01.11','DD.MM.RR'));
 
@@ -354,17 +354,17 @@ values (5001, 'Spiegel rechts', 10, '588797', ntPreisentwicklung());
 insert into Bauteil (BtNr, Teilename, Einbauzeit, HstNr, Preis)
 values (5002, 'Auspuff', 30, '693253', ntPreisentwicklung());
 
-insert into TABLE (SELECT Preis from Bauteil where Bauteil.BtNr = 5000)
+insert into table (select Preis from Bauteil where Bauteil.BtNr = 5000)
 values ('7007', 900, TO_DATE('12102013', 'DDMMYY'));
 
-insert into TABLE (SELECT Preis from Bauteil where Bauteil.BtNr = 5001)
+insert into table (select Preis from Bauteil where Bauteil.BtNr = 5001)
 values ('7008', 100, TO_DATE('12102013', 'DDMMYY'));
 
-insert into TABLE (SELECT Preis from Bauteil where Bauteil.BtNr = 5002)
+insert into table (select Preis from Bauteil where Bauteil.BtNr = 5002)
 values ('7009', 2000, TO_DATE('12102013', 'DDMMYY'));
 
 --4.6
-SELECT * FROM Bauteil
+select * from Bauteil
 CONNECT BY PRIOR BtNr=Baugruppe
 START WITH Baugruppe IS NULL;
 
@@ -376,4 +376,40 @@ select * from Bauteil where ROWNUM <= 5 order by btnr;
 
 --4.9
 
+select Baugruppe, BTNR, Teilname, Einbauzeit,
+RANK() OVER (PARTITION BY Baugruppe ORDER BY Einbauzeit) "Rank"
+from Bauteil WHERE Baugruppe IS NOT NULL;
+
+--5.1
+create TYPE TAdresse AS OBJECT
+(
+Strasse varchar2(50),
+Plz varchar2(5),
+Ort varchar(50)
+);
+
+-- 5.2
+create table Lieferant (
+  LiefNr number(6) PRIMARY KEY,
+  Name varchar2(20) NOT NULL,
+  Adresse TAdresse
+);
+
+-- 5.3
+create view Lieferant_OV (LiefNr, Name, Strasse, Plz, Ort) AS
+select l.LiefNr, l.Name, l.Adresse.Strasse, l.Adresse.Plz, l.Adresse.Ort
+from Lieferant l;
+
+--6
+--6.1 PK,Unique-Constraints,NotNULL,Datentypswahl
+
+--6.2
+create TRIGGER Lieferant_OV_Insert
+for insert ON Lieferant_OV
+FOR EACH ROW
+    BEGIN
+      IF insertING THEN
+	   insert INTO Lieferant VALUES  (:new.LiefNr, :new.Name,TAdresse(:new.Strasse, :new.Plz, :new.Ort)
+      END IF;
+    END
 
